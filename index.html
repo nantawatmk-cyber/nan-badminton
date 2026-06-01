@@ -4,36 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>จองสนามแบดมินตัน</title>
-    <!-- ใช้ Tailwind CSS เพื่อความสวยงามแบบง่ายๆ -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-5">
-    <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+    <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
         <h2 class="text-2xl font-bold mb-6 text-center text-blue-600">จองสนามแบดมินตัน</h2>
         
         <form id="bookingForm" class="space-y-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700">ชื่อผู้จอง</label>
-                <input type="text" id="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                <input type="text" id="userName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">เบอร์โทรศัพท์</label>
-                <input type="tel" id="phone" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                <input type="tel" id="userPhone" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">วันที่</label>
-                <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                <input type="date" id="bookingDate" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">เลือกสนาม</label>
-                <select id="court" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                <select id="courtNumber" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
                     <option value="Court 1">สนาม 1</option>
                     <option value="Court 2">สนาม 2</option>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">เวลา</label>
-                <select id="time" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                <select id="bookingTime" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
                     <option value="17:00 - 18:00">17:00 - 18:00</option>
                     <option value="18:00 - 19:00">18:00 - 19:00</option>
                     <option value="19:00 - 20:00">19:00 - 20:00</option>
@@ -45,30 +44,31 @@
     </div>
 
     <script>
+        // ⚠️ อย่าลืมเอา URL ของ Google Apps Script ของคุณมาใส่ตรงนี้แทนข้อความข้างล่างนะครับ
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydL1QSWv_DaADkKhGjGfgs-WT5vxwcFZ_YST7VcQiIVTwu4YYnG_HlaS81v5xGJi_Tsg/exec";
 
         document.getElementById('bookingForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // ดึงค่าจาก ID ที่เปลี่ยนใหม่ มั่นใจได้ว่าไม่มี Null แน่นอน
             const bookingData = {
-                name: document.getElementById('name').value,
-                phone: document.getElementById('phone').value,
-                date: document.getElementById('date').value,
-                court: document.getElementById('court').value,
-                time: document.getElementById('time').value
+                name: document.getElementById('userName').value,
+                phone: document.getElementById('userPhone').value,
+                date: document.getElementById('bookingDate').value,
+                court: document.getElementById('courtNumber').value,
+                time: document.getElementById('bookingTime').value
             };
 
-            // ส่งข้อมูลไปยัง Google Sheets
             fetch(WEB_APP_URL, {
                 method: 'POST',
-                mode: 'no-cors', // จำเป็นต้องใช้เมื่อยิงเข้า Apps Script จากภายนอกแบบง่าย
+                mode: 'no-cors',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(bookingData)
             })
             .then(() => {
-                alert('ส่งข้อมูลการจองเรียบร้อยแล้ว! กรุณารอเจ้าหน้าที่ยืนยัน');
+                alert('ส่งข้อมูลการจองเรียบร้อยแล้ว!');
                 document.getElementById('bookingForm').reset();
             })
             .catch(error => {
