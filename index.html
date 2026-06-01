@@ -33,11 +33,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-gray-300 mb-1">เลือกวันที่</label>
-                            <input type="date" id="checkDate" class="w-full bg-gray-600 border border-gray-500 rounded-lg p-2 text-white focus:outline-none focus:border-yellow-400" onchange="loadCourtStatus()">
+                            <input type="date" id="checkDate" class="w-full bg-gray-600 border border-gray-500 rounded-lg p-2 text-white focus:outline-none focus:border-yellow-400">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-300 mb-1">เลือกช่วงเวลา</label>
-                            <select id="checkTime" class="w-full bg-gray-600 border border-gray-500 rounded-lg p-2 text-white focus:outline-none focus:border-yellow-400" onchange="loadCourtStatus()">
+                            <select id="checkTime" class="w-full bg-gray-600 border border-gray-500 rounded-lg p-2 text-white focus:outline-none focus:border-yellow-400">
                                 <option value="17:00 - 18:00">17:00 - 18:00 น.</option>
                                 <option value="18:00 - 19:00">18:00 - 19:00 น.</option>
                                 <option value="19:00 - 20:00">19:00 - 20:00 น.</option>
@@ -108,28 +108,29 @@
     </div>
 
     <script>
+        // ⚠️ เอา Web App URL จาก Google Apps Script ของคุณมาใส่ตรงนี้แทนข้อความข้างล่างนะครับ
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8kHAkNaTf06HYDCyR6R1iJIiayH0RNiyS2hgg-Qm2qLkFCo3upSvFUoYstj3Wgvy5Ow/exec";
         let globalBookedSlots = [];
 
-        // 1. ฟังก์ชันดึงสถานะสนามตาม "วัน" และ "เวลา" ที่เลือก
+        // 1. ฟังก์ชันดึงสถานะสนาม
         function loadCourtStatus() {
-            const date = document.getElementById('checkDate').value;
-            const time = document.getElementById('checkTime').value;
+            const dateInput = document.getElementById('checkDate');
+            const timeInput = document.getElementById('checkTime');
+            if (!dateInput || !timeInput) return;
+
+            const date = dateInput.value;
+            const time = timeInput.value;
             
-            // ล้างค่าสนามที่เคยเลือกค้างไว้ก่อนหน้า
             cancelCourtSelection();
 
-            // เรียกไปถาม Google Sheets ว่าวันนั้นๆ มีใครจองบ้าง
             fetch(`${WEB_APP_URL}?date=${date}`)
             .then(res => res.json())
             .then(bookedSlots => {
                 globalBookedSlots = bookedSlots; 
                 
-                // เช็คว่า ณ วันและเวลานี้ สนาม 1 หรือ 2 โดนจองไปหรือยัง
                 const isCourt1Booked = bookedSlots.some(b => b.time === time && b.court === "สนาม 1");
                 const isCourt2Booked = bookedSlots.some(b => b.time === time && b.court === "สนาม 2");
 
-                // อัปเดตหน้าตาสนามตามความจริง
                 updateCourtUI(1, isCourt1Booked);
                 updateCourtUI(2, isCourt2Booked);
             })
@@ -140,19 +141,18 @@
             });
         }
 
-        // 2. ฟังก์ชันวาดสีและพฤติกรรมของสนาม (ว่าง=เขียว, เต็ม=แดงล็อกปุ่ม)
+        // 2. ปรับเปลี่ยนสีสนามตามความว่าง/เต็ม
         function updateCourtUI(courtNum, isBooked) {
             const btn = document.getElementById(`courtBtn${courtNum}`);
             const statusText = document.getElementById(`courtStatus${courtNum}`);
+            if(!btn || !statusText) return;
 
             if (isBooked) {
-                // ถ้าเต็ม: เปลี่ยนเป็นสีแดง ถอดเอฟเฟกต์ชี้ออก และยกเลิกการคลิก
                 btn.className = "badminton-court bg-red-600 h-48 rounded-xl flex flex-col justify-center items-center shadow-lg opacity-60 cursor-not-allowed";
                 statusText.className = "text-xs bg-red-900 text-white font-bold px-3 py-1 rounded-full mt-2";
                 statusText.innerText = "❌ เต็มแล้ว (จองซ้ำไม่ได้)";
                 btn.onclick = null; 
             } else {
-                // ถ้าว่าง: เปลี่ยนเป็นสีเขียว ใส่ปุ่มโฮเวอร์ และผูกฟังก์ชันเลือกสนามให้คลิกได้
                 btn.className = "badminton-court bg-green-600 hover:bg-green-500 cursor-pointer h-48 rounded-xl flex flex-col justify-center items-center shadow-lg transform hover:scale-105";
                 statusText.className = "text-xs bg-white text-green-700 font-bold px-3 py-1 rounded-full mt-2 shadow";
                 statusText.innerText = "🟢 ว่าง (คลิกเลือกจอง)";
@@ -160,7 +160,7 @@
             }
         }
 
-        // 3. ฟังก์ชันการคลิกเลือกสนามที่ว่าง
+        // 3. ฟังก์ชันการคลิกเลือกสนาม
         function selectCourt(courtName) {
             document.getElementById('selectedCourt').value = courtName;
             
@@ -172,7 +172,6 @@
             const num = courtName === "สนาม 1" ? 1 : 2;
             const otherNum = num === 1 ? 2 : 1;
             
-            // ไฮไลท์สนามที่กำลังกดเลือกด้วยขอบสีทอง
             const courtActive = document.getElementById(`courtBtn${num}`);
             if(courtActive) courtActive.classList.add('ring-4', 'ring-yellow-400');
             
@@ -184,9 +183,11 @@
         function cancelCourtSelection() {
             document.getElementById('selectedCourt').value = "";
             const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.className = "w-full bg-gray-500 text-gray-300 cursor-not-allowed p-3 rounded-lg font-bold text-sm mt-2";
-            submitBtn.innerText = "กรุณาเลือกสนามก่อน";
+            if(submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.className = "w-full bg-gray-500 text-gray-300 cursor-not-allowed p-3 rounded-lg font-bold text-sm mt-2";
+                submitBtn.innerText = "กรุณาเลือกสนามก่อน";
+            }
             
             const c1 = document.getElementById(`courtBtn1`);
             const c2 = document.getElementById(`courtBtn2`);
@@ -204,7 +205,6 @@
             const name = document.getElementById('userName').value;
             const phone = document.getElementById('userPhone').value;
 
-            // ด่านตรวจกันซ้ำวินาทีสุดท้าย: เช็คข้อมูลที่แคชไว้ในตัวแปรเผื่อโดนคนอื่นตัดหน้า
             const doubleCheck = globalBookedSlots.some(b => b.time === time && b.court === court);
             if (doubleCheck) {
                 alert('💥 จองซ้ำซ้อน! มีคนอื่นเพิ่งกดจองสนามนี้ในเวลาเดียวกันตัดหน้าคุณไปเมื่อครู่นี้เอง ระบบกำลังอัปเดตสถานะสนามใหม่ครับ');
@@ -218,11 +218,46 @@
 
             const bookingData = { name, phone, date, court, time };
 
-            // ยิงข้อมูลเข้า Google Sheets แบบเสถียรที่สุด (no-cors)
             fetch(WEB_APP_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bookingData)
             })
-            .then(()
+            .then(() => {
+                document.getElementById('sumName').innerText = name;
+                document.getElementById('sumDateTime').innerText = `${date} (${time} น.)`;
+                document.getElementById('sumCourt').innerText = court;
+
+                document.getElementById('bookingFormWrapper').classList.add('hidden');
+                document.getElementById('successCard').classList.remove('hidden');
+                loadCourtStatus(); 
+            })
+            .catch(error => {
+                console.error(error);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย');
+            });
+        });
+
+        function resetApp() {
+            document.getElementById('successCard').classList.add('hidden');
+            document.getElementById('bookingFormWrapper').classList.remove('hidden');
+            document.getElementById('bookingForm').reset();
+            loadCourtStatus();
+        }
+
+        // --- 6. ผูกฟังก์ชัน event listener ผ่าน JavaScript ทั้งหมดเมื่อเว็บพร้อม ---
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('checkDate').value = today;
+
+            // สั่งให้ดักจับการเปลี่ยนค่า (onchange) ผ่านตรงนี้แทน HTML ดั้งเดิมเพื่อความปลอดภัย
+            document.getElementById('checkDate').addEventListener('change', loadCourtStatus);
+            document.getElementById('checkTime').addEventListener('change', loadCourtStatus);
+
+            // รันครั้งแรกทันทีที่เปิดหน้าเว็บ
+            loadCourtStatus();
+        });
+    </script>
+</body>
+</html>
