@@ -181,25 +181,46 @@ document
 
 async function bookCourt(){
 
+try{
+
 const data = {
+date: document.getElementById("date").value,
+time: document.getElementById("time").value,
+court: selectedCourt,
+name: document.getElementById("name").value,
+phone: document.getElementById("phone").value,
+slipUrl: document.getElementById("slip").value
+};
 
-date:
-document.getElementById("date").value,
+alert("กำลังส่งข้อมูล");
 
-time:
-document.getElementById("time").value,
+const res = await fetch(
+"https://script.google.com/macros/s/AKfycbxsZbHGfdOk2umcJv-mRfaeigWgmQdG5MRxHu810onPhGnYZvT4aeCe8rMGwzXjHjQsxA/exec",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body: JSON.stringify(data)
+}
+);
 
-court:
-selectedCourt,
+const text = await res.text();
 
-name:
-document.getElementById("name").value,
+console.log(text);
 
-phone:
-document.getElementById("phone").value,
+alert("ส่งข้อมูลสำเร็จ");
 
-slipUrl:
-document.getElementById("slip").value
+}catch(err){
+
+console.error(err);
+
+alert("เกิดข้อผิดพลาด : " + err.message);
+
+}
+
+}
+
 
 };
 
